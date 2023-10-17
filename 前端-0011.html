@@ -1,0 +1,110 @@
+<!-- 简单增加了一些放大效果 -->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人名片</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('images/background.jpg') center/cover;
+            overflow-y: hidden;
+        }
+        .card {
+            display: flex;
+            border: 2px solid #333;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.9); 
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            background: url('images/background1.jpg') center/cover; 
+            color: #f3f3f3;
+            width: 35%;
+            height:32%;
+        }
+        .card .avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin-right: 60px;
+            background: url('images/avatar2.jpg') center/cover;
+            margin-left: 30px;
+        }
+        .card .QRcode {
+            position: absolute;
+            top: 27px;
+            right: 27px;
+            width: 70px;
+            height: 70px;
+            background: url('images/QRcode.jpg') center/cover;
+        }
+        .card .info {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex: 1;
+            font-size: large;
+            margin-left: 30px;
+            margin-top: 20px;
+        }
+        .card .info div {
+            margin-bottom: 10px;
+            transition: transform 0.3s;
+        }
+        .card .info div:hover {
+            transform: scale(1.05);
+        }
+        .card .encour {
+            align-self: flex-end;
+            font-style: italic;
+            margin-top: 10px;
+            transition: transform 0.3s;
+        }
+        .card .school {
+            position: absolute;
+            bottom: 10px;
+            left: 40%;
+            font-weight: bold;
+        }
+        /* 文字放大 */
+        .card .encour:hover {
+            transform: scale(1.05);
+        }
+        /* 放大时过渡 */
+        .card .avatar, .card .QRcode {
+            transition: transform 0.3s;
+        }
+        /* 头像放大 */
+        .card .avatar:hover{
+            transform: scale(1.1);
+        }
+        /* 二维码放大 */
+        .card .QRcode:hover{
+            transform: scale(1.7);
+
+        }
+
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="avatar"></div>
+        <div class="info">
+            <div class="name">姓名：张鹏程</div>
+            <div class="id">学号：2022090909018</div>
+            <div class="phone">电话：138-3314-1821</div>
+            <div class="email">邮箱：32322298486@qq.com</div>
+            <div class="encour">为了一路工作室努力奋斗</div>
+        </div>
+        <div class="QRcode"></div>
+        <div class="school">电子科技大学</div>
+    </div>
+</body>
+</html>
