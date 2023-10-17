@@ -1,0 +1,489 @@
+<!-- 除了要求的正计时倒计时，还实现了
+判断正计时与倒计时所选日期是否合理，正计时每隔一年进行一次提醒
+为当前计时状态进行提示，更加便利
+计时能够正常工作时，出现从下至上的图标弹幕
+添加三个图标，第一个显示现有的纪念日，第二个显示图库，第三个显示联系方式和跳转到个人名片 -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>爱，时光为证</title>
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            background: url('images/background.jpg') center/cover; 
+            overflow-y: hidden;
+        }
+        /* 计时器样式 */
+        .time-container {
+            background-color: rgba(255, 255, 255, 0.6);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 80%;
+            max-width: 500px;
+            height: 300px;
+            position: relative;
+        }
+        h1 {
+            margin-top: 0;
+            color: #333;
+        }
+        .description {
+            color: #888;
+            font-style: italic;
+        }
+
+        /* 时间显示样式 */
+        .time-number {
+            font-size: 2em;
+            margin: 30px 0;
+            color: #e74c3c;
+        }
+
+        /* 按钮样式 */
+        .date {
+            margin: 20px 0;
+        }
+
+        label, input, button {
+            margin-bottom: 10px;
+        }
+
+        /* 提示消息样式 */
+        .wrong {
+            color: #e74c3c;
+            font-weight: bold;
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            width: 100%; 
+            text-align: center;
+        }
+
+        /* 沙漏图标样式 */
+        .hourglass {
+            display: none; /* 初始状态为隐藏 */
+            width: 22px; 
+            height: auto;
+            vertical-align: middle; 
+            transition: transform 0.5s; /* 为旋转添加过渡效果 */
+            margin-left: 10px;
+        }
+
+        /* 图标容器样式 */
+        .icon-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        /* 图标样式和悬停效果 */
+        .icon {
+            width: 40px; 
+            height: 40px;
+            transition: transform 0.2s; /* 为悬停添加过渡 */
+        }
+
+        /* 悬停放大 */
+        .icon:hover {
+            transform: scale(1.2); 
+        }
+
+        /* 图片图库样式 */
+        .image-container {
+            display: none;
+            position: absolute;
+            top: 85%; 
+            left: 50%; 
+            transform: translateX(-50%);
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.8); /* 半透明背景 */
+            border-radius: 10px;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1); 
+            z-index: 3;
+            width: 250px;
+            height: 250px;
+        }
+
+        /* 图片悬停放大 */
+        .gallery-image {
+            width: 110px;
+            height: 110px;
+            margin: 5px 5px;
+            transition: transform 0.3s;
+        }
+        .gallery-image:hover {
+            transform: scale(1.3);
+        }
+
+        /* 纪念日日期样式 */
+        .date-container {
+            display: none;
+            position: absolute;
+            top: 85%; 
+            left: 20%; 
+            transform: translateX(-50%); 
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.7); 
+            border-radius: 10px;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1); 
+            z-index: 1; 
+            width: 250px; 
+        }
+        /* 联系方式样式 */
+        .number-container{
+            display: none;
+            position: absolute;
+            top: 85%; 
+            left: 80%; 
+            transform: translateX(-50%); 
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.7); 
+            border-radius: 10px;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1); 
+            z-index: 3; 
+            width: 250px; 
+
+        }
+        /* 弹幕效果样式 */
+        .image-barrage {
+            position: absolute;
+            bottom: 0;
+            width: 50px;
+            height: 50px;
+            transition-property: transform, opacity;
+        }
+
+        /* 提示消息样式 */
+        .time-type-message {
+            color: #1d3fb0;
+            font-weight: bold;
+            position: absolute; 
+            top: 32%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            width: 100%; 
+            text-align: center;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="time-container">
+        <h1>我们的纪念日计时器</h1>
+        <p class="description">爱，时光为证</p>
+        <!-- 提示当前是什么计时 -->
+        <p class="time-type-message" id="timeTypeMessage"></p>
+
+        <div class="time-number">
+            <span id="days">00</span>天
+            <span id="hours">00</span>小时
+            <span id="minutes">00</span>分钟
+            <span id="seconds">00</span>秒
+            <img class="hourglass" src="images/hourglass.png" alt="Hourglass">
+        </div>
+
+        <div class="date">
+            <label for="date-input">选择日期：</label>
+            <input type="date" id="date-input">
+            <button onclick="startCountdown()">开始倒计时</button>
+            <button onclick="startCountUp()">开始正计时</button>
+        </div>
+        <!-- 提醒日期选择 -->
+        <p class="wrong" id="wrong"></p>
+
+        <div class="icon-container">
+            <div class="anniversary-container">
+                <img class="icon" src="images/anniversary.png" alt="纪念日">
+                <div class="date-container" id="dateContainer">
+                    <p>在一起: 2022-2-14</p>
+                    <p>她的生日: 2003-12-31</p>
+                    <p>陪她去迪士尼乐园: 2022-08-25</p>
+                    <p>一同去音乐节: 2023-10-03</p>
+                </div>
+            </div>
+
+            <div class="gallery-container">
+                <img class="icon" src="images/gallery.png" alt="图库">
+                <div class="image-container" id="imageContainer">
+                    <img class="gallery-image" src="images/avatar2.jpg" alt="Image 1">
+                    <img class="gallery-image" src="images/avatar.jpg" alt="Image 2">
+                    <img class="gallery-image" src="images/avatar1.jpg" alt="Image 3">
+                    <img class="gallery-image" src="images/avatar3.jpg" alt="Image 4">
+                </div>
+            </div>
+            <div class="call-container">
+                <img class="icon" src="images/call.png" alt="电话">
+                <div class="number-container" id="numberContainer">
+                    <p>QQ：3232298486</p>
+                    <p>微信：pc27peach</p>
+                    <p>电话：138-3314-1821</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let countdownInterval;
+        let countUpInterval;
+        let lastYearNotified = 0; // 记录上次提醒的年份
+        // 判断是否该有弹幕
+        let isTimerActive = false;
+        let barrageInterval;
+
+        // 开始倒计时功能
+        function startCountdown() {
+            // 先默认弹幕 false
+            isTimerActive = false;
+            // 清空之前的提示消息
+            document.getElementById("wrong").textContent = ""; 
+            // 清空之前的弹幕
+            clearInterval(barrageInterval);
+            // 沙漏行内可见
+            const hourglass = document.querySelector('.hourglass');
+            hourglass.style.display = 'inline';
+            // 清空之前的计时
+            clearInterval(countdownInterval);
+            clearInterval(countUpInterval);
+            // 获取日期信息
+            const inputDate = new Date(document.getElementById("date-input").value).getTime();
+            // 对倒计时进行提示
+            document.getElementById("timeTypeMessage").textContent = "距我们的纪念日还剩";
+            
+            // 存入计时提示和日期
+            localStorage.setItem('timerMessage', document.getElementById("timeTypeMessage").textContent);
+            localStorage.setItem('selectedDate', inputDate);
+            localStorage.setItem('timerType', 'countdown');//记录此次选择为倒计时 
+
+            const now = new Date().getTime();
+            // 选择过去的日期进行倒计时
+            if (inputDate <= now) {
+                document.getElementById("wrong").textContent = "请选择一个未来的日期！";
+                return;
+            } 
+            // 时间对，弹幕出现
+            else {
+                isTimerActive = true;
+            }
+
+            // 每隔一秒更新一次的函数
+            countdownInterval = setInterval(() => {
+                // 更新当前时间
+                const now = new Date().getTime();
+                // 计算日期差值
+                const distance = inputDate - now;
+                // 判断日期
+                if (distance <= 0) {
+                    // 日期已到，清空弹幕，清空提示
+                    isTimerActive = false;
+                    clearInterval(countdownInterval);
+                    document.getElementById("wrong").textContent = "纪念日已到！";
+                    document.getElementById("timeTypeMessage").textContent = "";
+                    return;
+                }
+                // 日期没到，更新显示
+                updateTimeDisplay(distance);
+            }, 1000);
+            
+            // 每1秒发送一个图片弹幕
+            barrageInterval = setInterval(() => {
+                if (isTimerActive) {
+                    sendImageBarrage();
+                }
+            }, 1200);
+        }
+
+        // 开始正计时功能 基本同理
+        function startCountUp() {
+
+            isTimerActive = false;
+
+            document.getElementById("wrong").textContent = "";
+
+            clearInterval(barrageInterval);
+
+            const hourglass = document.querySelector('.hourglass');
+            hourglass.style.display = 'inline';
+
+            clearInterval(countdownInterval);
+            clearInterval(countUpInterval);
+
+            const inputDate = new Date(document.getElementById("date-input").value).getTime();
+
+            document.getElementById("timeTypeMessage").textContent = "距我们的纪念日已过";
+
+            localStorage.setItem('timerMessage', document.getElementById("timeTypeMessage").textContent);
+            localStorage.setItem('selectedDate', inputDate);
+            localStorage.setItem('timerType', 'countUp'); // 保存计时类型
+
+            countUpInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = now - inputDate;
+                if (distance <= 0) {
+                    clearInterval(countUpInterval);
+                    document.getElementById("wrong").textContent = "请选择一个过去的日期！";
+                    return;
+                }
+                else {
+                    isTimerActive = true;
+                }
+                updateTimeDisplay(distance);
+            }, 1000);
+
+            barrageInterval = setInterval(() => {
+                if (isTimerActive) {
+                    sendImageBarrage();
+                }
+            }, 1200);
+        }
+
+        // 更新时间显示功能
+        function updateTimeDisplay(distance) {
+            // 分别获取天，小时，分钟，秒
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            // 将获取的时间信息对应元素
+            document.getElementById("days").textContent = String(days).padStart(2, "0");
+            document.getElementById("hours").textContent = String(hours).padStart(2, "0");
+            document.getElementById("minutes").textContent = String(minutes).padStart(2, "0");
+            document.getElementById("seconds").textContent = String(seconds).padStart(2, "0");
+            // 计算过了几年
+            const yearsTogether = Math.floor(days / 365);
+            // 如果已满整年
+            if (yearsTogether > lastYearNotified && yearsTogether >= 1) {
+                // 数一共几年了
+                lastYearNotified = yearsTogether;
+                // 显示一共几年了
+                const messageElement = document.getElementById("wrong");
+                messageElement.textContent = `已在一起了${yearsTogether}年！`;
+                // 2.5秒后隐藏该提示
+                setTimeout(() => {
+                    messageElement.textContent = "";
+                }, 2500);
+            }           
+
+            // 选择沙漏图像
+            const hourglasses = document.querySelectorAll('.hourglass');
+            hourglasses.forEach(hourglass => {
+                // 如果沙漏当前是隐藏的，显示它
+                if (hourglass.style.display === 'none') {
+                    hourglass.style.display = 'inline';
+                }
+                // 获取当前的旋转角度
+                const currentRotation = parseInt(hourglass.style.transform.replace(/[^0-9]/g, '')) || 0;
+                // 旋转沙漏180度
+                hourglass.style.transform = `rotate(${currentRotation + 180}deg)`;
+            });
+        }
+
+        // 纪念日日期显示和隐藏
+        document.querySelector('.anniversary-container').addEventListener('mouseenter', function() {
+            document.getElementById('dateContainer').style.display = 'block';
+        });
+
+        document.querySelector('.anniversary-container').addEventListener('mouseleave', function() {
+            document.getElementById('dateContainer').style.display = 'none';
+        });
+
+        // 图片显示和隐藏
+        document.querySelector('.gallery-container').addEventListener('mouseenter', function() {
+            document.getElementById('imageContainer').style.display = 'block';
+        });
+
+        document.querySelector('.gallery-container').addEventListener('mouseleave', function() {
+            document.getElementById('imageContainer').style.display = 'none';
+        });
+
+        // 电话显示和隐藏
+        document.querySelector('.call-container').addEventListener('mouseenter', function() {
+            document.getElementById('numberContainer').style.display = 'block';
+        });
+
+        document.querySelector('.call-container').addEventListener('mouseleave', function() {
+            document.getElementById('numberContainer').style.display = 'none';
+        });
+
+
+        // 打开新页面
+        document.querySelector('[alt="电话"]').addEventListener('click', function() {
+            window.open('前端-0100.html');
+        });
+
+        // 发送图片弹幕功能
+        function sendImageBarrage() {
+            // 选择弹幕的空间
+            const barrageContainer = document.querySelector('.time-container');
+            // 随机选择一张图片
+            const randomImage = Math.floor(Math.random() * 3) + 1;
+            // 创建弹幕
+            const barrageImage = document.createElement('img');
+            barrageImage.src = `images/barrage${randomImage}.png`;
+            barrageImage.classList.add('image-barrage');
+            // 设置随机的水平位置
+            const randomX = Math.random() * (barrageContainer.clientWidth - 50);
+            barrageImage.style.left = `${randomX}px`;
+            // 设置随机的速度
+            const randomDuration = Math.random() * (15 - 5) + 5;
+            barrageImage.style.transitionDuration = `${randomDuration}s`;
+            // 添加弹幕
+            barrageContainer.appendChild(barrageImage);
+            // 启动动画
+            setTimeout(() => {
+                barrageImage.style.transform = `translateY(-${barrageContainer.clientHeight + 50}px)`;
+                // 透明度逐渐消失
+                barrageImage.style.opacity = '0';
+            }, 10);
+            
+            // 当动画完成后移除图片弹幕
+            barrageImage.addEventListener('transitionend', function() {
+                if (barrageContainer.contains(barrageImage)) {
+                barrageContainer.removeChild(barrageImage);}
+            });
+        }
+
+        // 从localstorage中取出日期
+        function loadDateFromLocalStorage() {
+            const savedDate = localStorage.getItem('selectedDate');
+            const timerType = localStorage.getItem('timerType');
+            // 改日期
+            if (savedDate && timerType) {
+                document.getElementById("date-input").value = new Date(parseInt(savedDate)).toISOString().split('T')[0];
+                
+                // 显示计时提醒
+                const savedTimerMessage = localStorage.getItem('timerMessage');
+                if (savedTimerMessage) {
+                    document.getElementById("timeTypeMessage").textContent = savedTimerMessage;
+                }
+
+                // 开启倒计时或者正计时
+                if (timerType === 'countdown') {
+                    startCountdown();} 
+                else if (timerType === 'countUp') {
+                    startCountUp();}
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            loadDateFromLocalStorage();
+        });
+
+    </script>
+</body>
+
+</html>
